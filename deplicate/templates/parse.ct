@@ -1,0 +1,100 @@
+#include "parse.h"
+#include "lexer.h"
+#include "../utils/err.h"
+#include <stdint.h>
+#include <stdio.h>
+
+// private forward declarations
+@[rule_fwd_decl]
+
+static int	advance(Parse *parse);
+static int	peek(Parse *parse, int num);
+static bool	match(Parse *parse, char *token);
+static bool	match_regex(Parse *parse, char *regex);
+static bool	consume(Parse *parse, int type);
+
+#define TOKEN parse->tokens[parse->pos]
+Expr *parse(Scan *scan, Parse **parse_out) {
+	if (scan->tokens == NULL) return NULL;
+
+	Parse *parse = malloc(sizeof(Parse));
+	parse->source	= scan->str;
+	parse->pos		= 0;
+	parse->tokens	= scan->tokens;
+	parse->length	= scan->token_len;
+	parse->ast_top	= 0;
+
+	// take ownership of tokens
+	scan->tokens	= NULL;
+	scan->token_len	= 0;
+	scan->token_cap	= 0;
+
+	*parse_out = parse;
+	return @[top_rule_name](parse);
+}
+
+bool free_parse(Parse *parse) {
+	if (parse == NULL) return false;
+
+	for (int i = 0; i < parse->ast_top; i++) {
+		@[free_parse]
+	}
+
+	free(parse);
+	return true;
+}
+
+static Expr *new_ast(Parse *parse) {
+	if (parse->ast_top > sizeof(parse->ast_pool)) {
+		error_file("Exceeded maximum AST nodes", TOKEN.line, parse->source->str);
+		return NULL;
+	}
+
+	return &parse->ast_pool[parse->ast_top++];
+}
+
+// Not a parsing rule, but does create more AST
+static Expr *token(Parse *parse, int type) {
+	Expr *expr = new_ast(parse);
+	*expr = (Expr) {
+		.tag	= type,
+		.token	= (DepToken) { copy_str(&TOKEN.value) },
+	};
+
+	advance(parse); // consume token
+	return expr;
+}
+
+@[rule_funcs]
+
+static int advance(Parse *parse) {
+	if (parse->pos >= parse->length) return -1;
+	return parse->tokens[parse->pos++].type;
+}
+
+static int peek(Parse *parse, int num) {
+	if (parse->pos >= parse->length) return -1;
+	return parse->tokens[parse->pos + num].type;
+}
+
+static bool match(Parse *parse, int type) {
+	if (peek(parse, 0) == type) {
+		parse->pos++;
+		return true;
+	}
+	
+	return false;
+}
+
+static bool consume(Parse *parse, int type) {
+	if (peek(parse, 0) == type) {
+		parse->pos++;
+		return true;
+	} else {
+		error_file("Expected token: ", TOKEN.line, parse->source->str);
+		error("\tI really need to add varags and printf formatting\n");
+		return false;
+	}
+}
+
+#undef TOKEN

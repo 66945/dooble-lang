@@ -1,0 +1,83 @@
+program -> statement * EOF ;
+
+=== STATEMENTS ===
+statement	-> stmt ';' ;
+stmt		-> expr
+			-> declaration
+			-> block
+			;
+
+if_stmt		-> 'if' expression statement ( 'else' statement )?;
+
+# for now just use a for each loop
+for_stmt	-> label? 'for' identifier 'in' expression statement;
+while_stmt	-> label? 'while' expression statement ;
+do_while	-> label? 'do' statement 'while' expression ;
+dont_while	-> label? 'dont' statement 'while' expression ;
+label 		-> ':' identifier ;
+
+include_stmt	-> 'include' string ;
+return_stmt		-> 'return' expression ;
+defer_stmt		-> 'defer' expression ;
+continue_stmt	-> 'continue' ( ':' identifier )? ;
+break_stmt		-> 'break' ( ':' identifier )? ;
+
+block		-> '{' statement* '}' ;
+
+=== DECLARATIONS ===
+declaration	->	( identifier ',' )*
+				identifier qualifier* ':' ( ( type ',' )* type )? ( ( ':' | '=' )
+				(expression ',')* expression )? ;
+
+# helper rule
+qualifier	-> 'static'
+			| 'pub'
+			| 'co'
+			| 'protect'
+			| 'final' # maybe
+			;
+
+=== EXPRESSIONS ===
+expression	-> range ;
+
+range		-> logic_or '..' logic_or ;
+
+logic_or	-> logic_and ( 'or' logic_and ) * ;
+logic_and	-> equality ( 'and' equality ) * ;
+equality	-> comparison ( ( 'is' 'not' | 'is' ) comparison ) * ;
+comparison	-> sum ( ( '>' | '<' | '>=' | '<=' ) sum ) * ;
+bit_or		-> bit_and ( '|' bit_and) * ;
+bit_and		-> sum ( '&' sum) * ;
+sum			-> factor ( ( '+' | '-' ) factor ) * ;
+factor		-> unary ( ( '*' | '/' ) unary ) * ;
+
+unary	-> ( '-' | 'not' | '*' | '&' )? call ;
+call	-> atom ( '(' ( expression ',' )* ')' | '.' identifier ) ;
+
+atom	-> procedure
+		-> identifier
+		-> numbers
+		-> strings
+		-> ( 'false' | 'true' | 'nil' )
+		-> '(' expression ')'
+		;
+
+=== TYPES ===
+type 	-> ( array | '*' )* ( identifier | struct | sumtype );
+array	-> '[' ( numbers | 'vec' )? ']' ;
+
+struct	-> 'struct' '{' declaration * '}' ;
+sumtype	-> 'sumtype' '{' declaration * '}' ;
+
+=== LITERALS ===
+procedure	-> '(' ( (declaration ',')* declaration )? ')' type? block ';' ;
+
+identifier 	-> /[_a-zA-Z][_a-zA-Z0-9]*/ ;
+
+numbers		-> /\d+\.?\d*/ # decimal
+			-> /0x\d+/     # hexadecimal
+			-> /0o\d+/     # octal
+			-> /0b\d+/     # binary
+			;
+
+strings		-> /'.*'/ ;

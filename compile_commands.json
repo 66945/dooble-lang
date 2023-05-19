@@ -1,0 +1,7 @@
+[
+	{
+		"directory": "C:\\Users\\Owner\\Documents\\cwrapper\\src",
+		"command":   "clang file.c -o dooble.exe -Wconditional-uninitialized -Wmissing-prototypes -Wimplicit-fallthrough -Wcomma -WUnreachable-code-break -Wall -std=c2x",
+		"file":      "file.c",
+	}
+]

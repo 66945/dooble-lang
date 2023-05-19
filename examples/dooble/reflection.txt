@@ -1,0 +1,99 @@
+package rflct
+
+Blobo :: struct {
+	hello:  *[][vec]map[int:(*int, str) int]
+	hello2: *[][vec]map[int:(*int, str) int]
+}
+
+Hello :: *[][vec]map[int:(*int, str) int]
+
+ptr     (0) --> slice (1) -> vec (2) -> map[4:7] (3)
+            |-> int   (5)
+int     (4)
+str     (6)
+(5,6) 4 (7)
+
+Hello   (100)
+
+Employee :: pub struct {
+	name protect: str
+	age  protect: int
+	id   final:   int
+}
+
+employees := [?]Employee{
+	Employee{ 'mark', 83, 3 }
+	Employee{ 'john', 73, 4 }
+	Employee{ 'luke', 84, 5 }
+	Employee{ 'jake', 85, 6 }
+	Employee{ 'lucy', 86, 7 }
+}
+
+for &employee in employees {
+	print('name: {employee.name}')
+}
+
+example :: () {
+	a := 1
+
+	hello := alloc [a]() {
+		print('%d' % a)
+	}
+
+	hello()
+}
+
+make_employee :: (name: str, age: int) *Employee {
+	uid static := -1
+	uid += 1
+
+	emp_pool.append(Employee {
+		name = name,
+		age  = age,
+		id   = uid,
+	})
+
+	return &emp_pool[uid]
+}
+
+-- reverses a string
+reverse :: co (sample: *str) char {
+	for i in len(str) .. 0 {
+		yield str[i]
+	}
+}
+
+enumerate pub :: co (arr: []$T) int, T {
+	for i := 0; i < len(arr); i += 1 {
+		yield i, arr[i]
+	}
+}
+
+general_factory :: (fn: ()int) [100]int {
+	arr: [100]int
+	for i in 0 .. 100 {
+		arr[i] = fn()
+	}
+	return arr
+}
+
+test :: () {
+	a := 1
+	b := 2
+
+	lambda :: [a]() {
+		return a + rand()
+	}
+
+	arr := general_factory(lambda)
+}
+
+main :: (args: str[]) {
+	sample := 'hello world'
+
+	blob := co enumerate()
+
+	for c in reverse(&sample) {
+
+	}
+}

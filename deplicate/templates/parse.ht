@@ -1,0 +1,32 @@
+#pragma once
+
+#include "lexer.h"
+#include "../strutils/str.h"
+#include <stdint.h>
+
+typedef struct Expr_t Expr;
+
+@[rules]
+
+struct Expr_t {
+	enum {
+		@[rule_tags]
+	} tag;
+
+	union {
+		@[rule_sum]
+	};
+};
+
+typedef struct {
+	string_t	*source;
+	uint32_t	pos;
+	Token		*tokens;
+	uint32_t	length;
+	Expr		ast_pool[1024];
+	uint16_t	ast_top;
+	GenTokens	gtokens;
+} Parse;
+
+Expr *parse(Scan *scan, Parse **parse);
+bool free_parse(Parse *parse);

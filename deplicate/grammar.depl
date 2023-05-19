@@ -1,0 +1,8 @@
+decls	-> /\i+/ ( "," /\i+/ )* ":=" expr ( "," expr )* ;
+
+struct {
+	string	cap0;
+	string	cap1[];
+	expr	*cap2;
+	expr	*cap3[];
+}

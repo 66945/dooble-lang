@@ -1,0 +1,95 @@
+#include "lexer.h"
+#include "../strutils/str.h"
+#include "../utils/err.h"
+#include "../utils/utils.h"
+#include "../regex/re.h"
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// private forward declarations
+static bool match(Scan *scan, const char *str);
+static bool match_regex(Scan *scan, const char *re);
+
+static void emit_token(Scan *scan, Token type);
+
+#define TOKEN_INIT_CAPACITY 50
+void scan(string_t *source, Scan *scan) {
+	*scan = (Scan) {
+		.pos		= 0,
+		.line		= 0,
+		.str		= source,
+		.tokens		= malloc(sizeof(Token) * TOKEN_INIT_CAPACITY),
+		.token_cap	= TOKEN_INIT_CAPACITY,
+		.token_len	= 0,
+	};
+
+	while (scan->pos < scan->str->size) {
+		int consume = 0;
+		while (scan->pos < scan->str->size) {
+			switch (scan->str[scan->pos]) {
+				case '\n':
+					scan->line++;
+				case ' ':
+				case '\t':
+					scan->pos++;
+					break;
+				default:
+					goto end_whitespace;
+			}
+		}
+
+end_whitespace:
+		@[tokenizer]
+	}
+
+	emit_token(scan, (Token) { END, .line = scan->line });
+}
+#undef TOKEN_INIT_CAPACITY
+
+bool free_scan(Scan *scan) {
+	if (scan->tokens == NULL) return false;
+
+	for (int i = 0; i < scan->token_len; i++) {
+		if (@[free_conditions]) {
+			freestr(&scan->tokens[i].value);
+		}
+	}
+
+	free(scan->tokens);
+	scan->tokens = NULL;
+	return true;
+}
+
+static bool match(Scan *scan, const char *str) {
+	int len = strlen(str);
+	if (scan->pos + len >= scan->str->size) {
+		return false;
+	}
+
+	const char *shifted_string = &scan->str->str[scan->pos];
+
+	for (int i = 0; i < len; i++) {
+		if (str[i] != shifted_string[i]) return false;
+	}
+
+	return true;
+}
+
+static bool match_regex(Scan *scan, const char *re) {
+	re_t pattern = re_compile(re);
+
+	const char *shifted_string = &scan->str->str[scan->pos];
+	return re_matchp(pattern, shifted_string, NULL) == 0;
+}
+
+static void emit_token(Scan *scan, Token token) {
+	if (scan->token_len == scan->token_cap) {
+		scan->token_cap *= 2;
+		scan->tokens = realloc(scan->tokens, sizeof(Token) * scan->token_cap);
+	}
+
+	scan->tokens[scan->token_len++] = token;
+}

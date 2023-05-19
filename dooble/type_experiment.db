@@ -1,0 +1,32 @@
+Machine :: sum {
+	Init
+	PowerUp: dooble
+	CheckStatus
+	Fire
+	PassiveCool
+	ActiveCool
+}
+
+Status :: struct {
+	temp: dooble
+}
+
+run_machine :: (state: *Machine) {
+	match *state {
+		.Init *state = .PowerUp(0)
+		.PowerUp {
+			if state.PowerUp > 5 {
+				*state = .CheckStatus
+			} else {
+				*state.PowerUp += .1
+			}
+		}
+		.CheckStatus {
+			status := get_status()
+			if status.temp > 50 *state = PassiveCool
+		}
+	}
+}
+
+machine := Machine.Init
+loop machine.run_machine()
