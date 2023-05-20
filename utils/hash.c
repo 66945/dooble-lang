@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static unsigned long long hash_str(const char *key) {
+unsigned long long hash_str(const char *key) {
 	int len = strlen(key);
 	if (len >= KEY_SIZE) return -1;
 

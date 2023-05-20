@@ -49,7 +49,7 @@ static int peek_num(Parse *p, u8 num) {
 	return p->tokens.arr[p->position + num].token;
 }
 
-static int peek(Parse *p) {
+inline static int peek(Parse *p) {
 	return peek_num(p, 0);
 }
 

@@ -58,3 +58,6 @@ bool     set_pair(HashMap *map, void *key, void *val);
 void    *get_pair(HashMap *map, void *key);
 bool     delete_pair(HashMap *map, void *key);
 bool     free_map(HashMap *map);
+
+// hash functions
+unsigned long long hash_str(const char *key);

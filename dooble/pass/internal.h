@@ -9,3 +9,10 @@ typedef struct {
 	TypeTree    all_types;
 	HashMap     symbol_table;
 } Semantics;
+
+Semantics init_semantics(void);
+void      add_semantic_info(Semantics *semantics, AstResult *result); // NOTE: should support multithreading
+void      free_semantics(Semantics *semantics);
+
+/* multithreading on windows, this should be fun ...
+ * */
