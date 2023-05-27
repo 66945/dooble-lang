@@ -58,11 +58,12 @@ static UnitTest_t parse_call_test(void) {
 
 	DoobleToken *tokens = NULL;
 	u32          len    = get_tokens(buffer, &tokens);
-	AstResult    ast    = get_ast(len, tokens, buffer);
+	TypeTree     tree   = init_TypeTree();
+	AstResult    ast    = get_ast(len, tokens, &tree, buffer);
 
 	print_ast(ast.pool);
 	free_ast(ast.pool_size, ast.pool);
-	freetree(&ast.tree);
+	freetree(&tree);
 
 	END_UNIT_TEST();
 }
@@ -72,12 +73,13 @@ static UnitTest_t parse_test(void) {
 
 	DoobleToken *tokens = NULL;
 	u32          len    = get_tokens(buffer, &tokens);
-	AstResult    ast    = get_ast(len, tokens, buffer);
+	TypeTree     tree   = init_TypeTree();
+	AstResult    ast    = get_ast(len, tokens, &tree, buffer);
 
 	// print_tokens(len, tokens);
 	print_ast(ast.pool);
 	free_ast(ast.pool_size, ast.pool);
-	freetree(&ast.tree);
+	freetree(&tree);
 
 	END_UNIT_TEST();
 }
@@ -87,11 +89,12 @@ static UnitTest_t parse_fn(void) {
 
 	DoobleToken *tokens = NULL;
 	u32          len    = get_tokens(buffer, &tokens);
-	AstResult    ast    = get_ast(len, tokens, buffer);
+	TypeTree     tree   = init_TypeTree();
+	AstResult    ast    = get_ast(len, tokens, &tree, buffer);
 
 	print_ast(ast.pool);
 	free_ast(ast.pool_size, ast.pool);
-	freetree(&ast.tree);
+	freetree(&tree);
 
 	END_UNIT_TEST();
 }

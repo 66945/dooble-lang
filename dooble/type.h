@@ -35,6 +35,8 @@ typedef struct {
 	typeid   type;
 } Member;
 
+/* TypeLeaf should be a constant data type, so seperate heap allocations could be avoided
+ * with a more complex free function */
 typedef struct TypeLeaf_t TypeLeaf;
 struct TypeLeaf_t {
 	enum : u8 {
@@ -99,4 +101,6 @@ typedef enum : u8 {
 TypeTree init_TypeTree(void);
 typeid   get_leaf(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf);
 void     print_typetree(TypeTree *tree);
+// FIXME: does not do a proper deep copy with type references
+// bool     copy_typetree(TypeTree *tree_a, TypeTree *tree_b); // deep copy
 bool     freetree(TypeTree *tree);

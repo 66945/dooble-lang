@@ -136,6 +136,25 @@ typedef struct {
 	Node      *block;
 } Function;
 
+// THING :: OTHER
+// OTHER :: THING
+//
+// BLOB :: THING
+//
+// FINE :: JOHN
+// JOHN :: BOB + TOM
+// BOB  :: 0
+// TOM  :: BOB
+//
+// dependencies
+// THING -> OTHER -> THING    -> ...
+// OTHER -> THING -> OTHER    -> ...
+// BLOB  -> THING -> OTHER    -> THING -> ...
+// FINE  -> JOHN  -> BOB, TOM -> BOB
+// JOHN  ->
+// BOB   -> :)
+// TOM   -> BOB
+
 typedef struct {
 	enum {
 		LIT_STR,
@@ -190,11 +209,15 @@ struct Node_t {
 	};
 };
 
+typedef enum {
+	PARSE_OK  = 0b0000000000000000,
+	PARSE_ERR = 0b0000000000000001,
+} ParseError;
+
 typedef struct {
-	Node    *pool;
-	size_t   pool_size;
-	bool     err;
-	TypeTree tree;
+	Node       *pool;
+	size_t      pool_size;
+	ParseError  err;
 } AstResult;
 
 /**
@@ -206,6 +229,6 @@ typedef struct {
  * @param buf the original file the tokens were produced from
  * @return an abstract syntax tree
  * */
-AstResult get_ast(size_t N, DoobleToken tokens[N], const char *const buf);
+AstResult get_ast(size_t N, DoobleToken tokens[N], TypeTree *tree, const char *const buf);
 void      print_ast(Node *node);
 void      free_ast(size_t N, Node pool[N]);

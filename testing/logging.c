@@ -7,8 +7,8 @@
 #include <string.h>
 #include <time.h>
 
-static FILE		*logFile;
-static time_t	prevtime = 0;
+static FILE   *logFile;
+static time_t  prevtime = 0;
 
 void openLog(const char *file) {
 	fopen_s(&logFile, file, "a"); // handle err code
@@ -24,7 +24,7 @@ void writeLine(const char *str, ...) {
 	size_t formattedLen = vsnprintf(NULL, 0, str, args);
 
 	va_start(args, str);
-	char* formatted = _alloca(sizeof(char) * formattedLen);
+	char formatted[formattedLen];
 	vsprintf_s(formatted, formattedLen, str, args);
 
 	if(rawtime - prevtime > 1) {

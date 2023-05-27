@@ -23,7 +23,7 @@ typedef struct {
 		size_t       len;
 	} tokens;
 
-	TypeTree type_tree;
+	TypeTree *type_tree;
 } Parse;
 
 static Node *append_node(Parse *p, Node *node) {
@@ -125,7 +125,7 @@ enum : u16 {
 };
 
 #define GET_LEAF(...) \
-		get_leaf(&p->type_tree, leaf, &(TypeLeaf) { __VA_ARGS__ })
+		get_leaf(p->type_tree, leaf, &(TypeLeaf) { __VA_ARGS__ })
 
 static typeid parse_type(Parse *p);
 
@@ -172,7 +172,7 @@ static TypeLeaf *parse_fntype(Parse *p, TypeLeaf *leaf) {
 	expect(p, DB_RPAREN, "expected ')'");
 	fn.fn.ret = match(p, DB_ARROW) ? parse_type(p) : NULL;
 
-	return get_leaf(&p->type_tree, leaf, &fn);
+	return get_leaf(p->type_tree, leaf, &fn);
 }
 
 /*
@@ -181,7 +181,9 @@ Pose :: struct {
 	y: dooble
 }
 
+-- possible syntax
 Player :: struct {
+	pos := Pose {0, 0}
 }
 */
 
@@ -229,7 +231,7 @@ static TypeLeaf *parse_struct(Parse *p, TypeLeaf *leaf, bool is_union) {
 		};
 	}
 
-	return get_leaf(&p->type_tree, leaf, &ztruct);
+	return get_leaf(p->type_tree, leaf, &ztruct);
 }
 
 static typeid parse_type(Parse *p) {
@@ -334,7 +336,7 @@ static Node *unary(Parse *p);
 static Node *call(Parse *p);
 static Node *atom(Parse *p);
 
-AstResult get_ast(size_t N, DoobleToken tokens[N], const char *const buf) {
+AstResult get_ast(size_t N, DoobleToken tokens[N], TypeTree *tree, const char *const buf) {
 	const u8 POOL_INIT_SIZE = 100;
 
 	Parse parse = {
@@ -349,7 +351,7 @@ AstResult get_ast(size_t N, DoobleToken tokens[N], const char *const buf) {
 			.arr = tokens,
 			.len = N,
 		},
-		.type_tree = init_TypeTree(),
+		.type_tree = tree,
 	};
 
 	// should be the first right?
@@ -381,7 +383,6 @@ AstResult get_ast(size_t N, DoobleToken tokens[N], const char *const buf) {
 		.err       = parse.parse_error,
 		.pool      = global_scope,
 		.pool_size = parse.ast_pool.len,
-		.tree      = parse.type_tree,
 	};
 }
 

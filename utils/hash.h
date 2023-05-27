@@ -36,8 +36,6 @@ typedef struct {
 	void   *content;
 } HashKey;
 
-typedef VEC(HashKey) HashKeyPool;
-
 typedef size_t (*hash_t)   (void *);
 typedef void   (*delete_t) (void *);
 
@@ -46,11 +44,13 @@ typedef struct {
 	hash_t   hashfn;
 	delete_t delete;
 
-	VEC(HashKeyPool) table;
+	VEC(HashKey) table;
 } HashMap;
 
-#define BUILD_MAP(type, hashfn, delete) build_map(sizeof(type), hashfn, delete)
+#define BUILD_MAP(type, hashfn, delete) build_map(sizeof(type), (hash_t) hashfn, (delete_t) delete)
 #define GET_PAIR(type, map, key) ((type *) get_pair(map, key))
+
+#define HASH_MAX_LOAD 0.75
 
 // NULL hashfn and delete result in ptr hash and basic free
 HashMap  build_map(size_t key_size, hash_t hashfn, delete_t delete);
@@ -60,4 +60,4 @@ bool     delete_pair(HashMap *map, void *key);
 bool     free_map(HashMap *map);
 
 // hash functions
-unsigned long long hash_str(const char *key);
+unsigned long long hash_str(const char *key, size_t len);

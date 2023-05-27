@@ -15,8 +15,8 @@
 
 #define loop while (1)
 #define for_range(i, num) for (int i = 0; i < num; i++)
-#define new(T)            calloc(sizeof(T), 1)
-#define make(T, N)        calloc(sizeof(T), N)
+#define new(T)            (T *) calloc(sizeof(T), 1)
+#define make(T, N)        (T *) calloc(sizeof(T), N)
 
 #define VEC(T)     struct { T *arr; size_t len; size_t cap; }
 #define PAIR(A, B) struct { A a; B b; }

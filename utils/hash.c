@@ -6,10 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-unsigned long long hash_str(const char *key) {
-	int len = strlen(key);
-	if (len >= KEY_SIZE) return -1;
-
+unsigned long long hash_str(const char *key, size_t len) {
 	const int p = 53;
 	const int m = 1e9 + 9;
 
@@ -31,9 +28,9 @@ HashSet init_hashset(void) {
 	};
 
 	for (int i = 0; i < HASH_INIT_SIZE; i++) {
-		set.items[i].key[0]		= '\0';
-		set.items[i].full		= false;
-		set.items[i].ordered	= -1;
+		set.items[i].key[0]  = 0;
+		set.items[i].full    = false;
+		set.items[i].ordered = -1;
 	}
 
 	return set;
@@ -46,7 +43,9 @@ void free_hashset(HashSet *set) {
 }
 
 bool add_item(HashSet *set, const char *key) {
-	uint16_t slot = (hash_str(key) % set->cap);
+	size_t len = strlen(key);
+	if (len > KEY_SIZE - 1) return false;
+	uint16_t slot = (hash_str(key, len) % set->cap);
 
 	while (slot < set->cap) {
 		if (!set->items[slot].full) {
@@ -74,7 +73,9 @@ bool add_item(HashSet *set, const char *key) {
 }
 
 bool has_item(HashSet *set, const char *key) {
-	int slot = (hash_str(key) % set->cap);
+	size_t len = strlen(key);
+	if (len > KEY_SIZE - 1) return false;
+	int slot = (hash_str(key, len) % set->cap);
 
 	while (slot < set->cap) {
 		if (set->items[slot].full && strcmp(set->items[slot].key, key) == 0) {
@@ -88,7 +89,9 @@ bool has_item(HashSet *set, const char *key) {
 }
 
 int get_item(HashSet *set, const char *key) {
-	int slot = (hash_str(key) % set->cap);
+	size_t len = strlen(key);
+	if (len > KEY_SIZE - 1) return -1;
+	int slot = (hash_str(key, len) % set->cap);
 
 	while (slot < set->cap) {
 		if (set->items[slot].full && strcmp(set->items[slot].key, key) == 0) {
@@ -102,7 +105,9 @@ int get_item(HashSet *set, const char *key) {
 }
 
 bool delete_item(HashSet *set, const char *key) {
-	int slot = (hash_str(key) % set->cap);
+	size_t len = strlen(key);
+	if (len > KEY_SIZE - 1) return false;
+	int slot = (hash_str(key, len) % set->cap);
 
 	while (slot < set->cap) {
 		if (set->items[slot].full && strcmp(set->items[slot].key, key) == 0) {
@@ -143,126 +148,112 @@ HashMap build_map(size_t key_size, hash_t hashfn, delete_t delete) {
 		.hashfn   = hashfn != NULL ? hashfn : hash_ptr,
 		.delete   = delete,
 		.table    = {
-			.arr = make(HashKeyPool, HASH_INIT_SIZE),
+			.arr = make(HashKey, HASH_INIT_SIZE),
 			.len = 0,
 			.cap = HASH_INIT_SIZE,
 		},
 	};
 
-	memset(map.table.arr, 0, sizeof(HashKeyPool) * HASH_INIT_SIZE);
+	memset(map.table.arr, 0, sizeof(HashKey) * HASH_INIT_SIZE);
 	return map;
 }
 
-bool set_pair(HashMap *map, void *key, void *val) {
-	const size_t  HASH = map->hashfn(key);
-	HashKeyPool  *pool = &map->table.arr[HASH % map->table.cap];
+static void adjust_capacity(HashMap *map) {
+	typeof(map->table) new_table = {
+		.arr = make(HashKey, map->table.cap * 2),
+		.len = map->table.len,
+		.cap = map->table.cap * 2,
+	};
 
-	if (pool->cap == 0) {
-		pool->cap = 2;
-		pool->arr = make(HashKey, pool->cap);
-		pool->len = 0;
+	memset(new_table.arr, 0, sizeof(HashKey) * new_table.cap);
+
+	for_range (i, map->table.cap) {
+		if (map->table.arr[i].key -= 0) continue;
+
+		// should both be constant
+		size_t  HASH    = map->table.arr[i].key;
+		void   *CONTENT = map->table.arr[i].content;
+
+		new_table.arr[HASH % new_table.cap].key     = HASH;
+		new_table.arr[HASH % new_table.cap].content = CONTENT;
 	}
 
-	// strictly speaking this else should do nothing as a for loop will run over
-	// a range of 0 .. 0. Also the fact that I have to write this comment is
-	// indicative of bad code.
-	else {
-		for_range (i, pool->len) {
-			HashKey *const current = &pool->arr[i];
-			if (current->key != HASH) continue;
+	free(map->table.arr);
+	map->table = new_table;
+}
 
-			if(map->delete != NULL) {
-				map->delete(current->content);
-			}
+bool set_pair(HashMap *map, void *key, void *val) {
+	const size_t  HASH      = map->hashfn(key);
+	size_t        address   = HASH % map->table.cap;
+	HashKey      *hash_item = &map->table.arr[address];
 
-			free(current->content);
-			current->content = malloc(map->val_size);
-			memmove(current->content, val, map->val_size);
+	float load = (float) map->table.len / (float) map->table.cap;
+	if (load > HASH_MAX_LOAD) adjust_capacity(map);
+
+	if (hash_item->content == NULL) {
+		hash_item->key     = HASH;
+		hash_item->content = malloc(map->val_size);
+		memmove(hash_item->content, val, map->val_size);
+
+		return true;
+	}
+
+	// open addressing style
+	loop {
+		address = (address + 1) % map->table.cap;
+		if (map->table.arr[address].content == NULL) {
+			hash_item          = &map->table.arr[address];
+			hash_item->key     = HASH;
+			hash_item->content = malloc(map->val_size);
+			memmove(hash_item->content, val, map->val_size);
+
 			return true;
 		}
 	}
-
-	EXTEND_ARR(HashKey, pool->arr, pool->len, pool->cap);
-	pool->arr[pool->len++] = (HashKey) {
-		.key     = HASH,
-		// WARN: for a large hashmap this could cause some problems with memory
-		// fragmentation. a linear allocator might work, but some other pool
-		// would probably do the job better
-		.content = malloc(map->val_size),
-	};
-
-	void *const content = pool->arr[pool->len - 1].content;
-
-	if (content == NULL) {
-		warn("could not make allocation for hash item: %s:%d", __FILE__, __LINE__);
-		return false;
-	}
-
-	memmove(content, val, map->val_size);
-
-	map->table.len++;
-	return true;
 }
 
 // returns a reference to the hashmap item with a lifetime of the key
 void *get_pair(HashMap *map, void *key) {
-	const size_t  HASH = map->hashfn(key);
-	HashKeyPool  *pool = &map->table.arr[HASH % map->table.cap];
+	const size_t HASH    = map->hashfn(key);
+	size_t       address = HASH % map->table.cap;
 
-	for_range (i, pool->len) {
-		if (pool->arr[i].key == HASH) {
-			return pool->arr[i].content;
+	loop {
+		if (map->table.arr[address].key == HASH) {
+			return map->table.arr[address].content;
+		} else if (map->table.arr[address].content == NULL) {
+			return NULL;
 		}
+
+		address = (address + 1) % map->table.cap;
 	}
 
 	return NULL;
 }
 
 bool delete_pair(HashMap *map, void *key) {
-	const size_t HASH = map->hashfn(key);
+	const size_t HASH    = map->hashfn(key);
+	size_t       address = HASH % map->table.cap;
 
-	HashKeyPool *pool = &map->table.arr[HASH % map->table.cap];
-	for_range (i, pool->len) {
-		HashKey *const current = &pool->arr[i];
-		if (current->content == NULL) return false;
+	loop {
+		if (map->table.arr[address].key == HASH) {
+			HashKey *hash_item = &map->table.arr[address];
+			free(hash_item->content);
+			hash_item->key     = 0;
+			hash_item->content = NULL;
 
-		if (current->key == HASH) {
-			if (map->delete != NULL) {
-				map->delete(current->content);
-			}
-
-			free(current->content);
-			if (i < pool->len - 1) {
-				memmove(current, &pool->arr[i + 1], sizeof(HashKey) * (pool->len - i));
-			}
-
-			pool->len--;
 			return true;
+		} else if (map->table.arr[address].content == NULL) {
+			return false;
 		}
-	}
 
-	return false;
+		address = (address + 1) % map->table.cap;
+	}
 }
 
 bool free_map(HashMap *map) {
 	for_range (i, map->table.cap) {
-		HashKeyPool *const pool = &map->table.arr[i];
-		if (pool->cap == 0) continue;
-
-		for_range (j, pool->len) {
-			if (map->delete != NULL) {
-				map->delete(pool->arr[j].content);
-			}
-
-			free(pool->arr[j].content);
-			pool->arr[j].content = NULL;
-			pool->arr[j].key     = 0;
-		}
-
-		free(pool->arr);
-		pool->arr = NULL;
-		pool->cap = 0;
-		pool->len = 0;
+		if (map->table.arr[i].content == NULL) continue;
+		free(map->table.arr[i].content);
 	}
 
 	free(map->table.arr);

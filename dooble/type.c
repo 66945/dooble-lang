@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef size_t TypePath[10]; // With 10 it takes 80 bytes. Should this be a vector?
+
 static bool leaf_eq(TypeLeaf *leafa, TypeLeaf *leafb) {
 	if (leafa->tag != leafb->tag) return false;
 
@@ -23,7 +25,7 @@ static bool leaf_eq(TypeLeaf *leafa, TypeLeaf *leafb) {
 				return false;
 			}
 
-			for_range(i, leafa->fn.len) {
+			for_range (i, leafa->fn.len) {
 				if (leafa->fn.arr[i] != leafb->fn.arr[i])
 					return false;
 			}
@@ -74,7 +76,7 @@ typeid get_leaf(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf) {
 	EXTEND_ARR(TypeLeaf, branch->arr, branch->len, branch->cap);
 	TypeLeaf *const new_leaf = &branch->arr[branch->len++];
 
-	*new_leaf        = *leaf;
+	*new_leaf = *leaf;
 	new_leaf->parent = base;
 	new_leaf->next   = NULL;
 
@@ -127,6 +129,37 @@ TypeTree init_TypeTree(void) {
 
 	return tree;
 }
+
+// FIXME: add TypePath for deep copy of type references
+
+/* bool copy_typetree(TypeTree *tree_a, TypeTree *tree_b) {
+ * 	TypeBranch *const base_types = &tree_b->arr[0];
+ * 
+ * 	for_range (i, base_types->len) {
+ * 		TypeLeaf *leaf  = &base_types->arr[i];
+ * 		TypeLeaf *clone = get_leaf(tree_a, NULL, leaf); // build type
+ * 
+ * 		// NOTE: is clone != NULL necessary?
+ *
+ * 		while (leaf != NULL && clone != NULL) {
+ * 			size_t clone_len = clone->next != NULL ? clone->next->len : 0;
+ * 			size_t leaf_len  = leaf->next  != NULL ? leaf->next->len  : 0;
+ * 
+ * 			if (clone_len <= leaf_len) {
+ * 				leaf = leaf->parent;
+ * 				continue;
+ * 			}
+ * 
+ * 			else {
+ * 				get_leaf(tree_a, clone, &leaf->next->arr[clone->next->len++]);
+ * 				leaf = &leaf->next->arr[clone->next->len - 1];
+ * 			}
+ * 		}
+ * 	}
+ * 
+ * 	return true;
+ * }
+ * */
 
 bool freetree(TypeTree *tree) {
 	for_range (i, tree->len) {
