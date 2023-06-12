@@ -6,6 +6,7 @@
 
 // a very useful abstraction
 typedef void *typeid;
+#define VOID_ID nullptr
 
 typedef struct TypeBranch_t TypeBranch;
 
@@ -87,7 +88,11 @@ struct TypeBranch_t {
 };
 
 typedef struct {
-	VEC(TypeBranch);
+	struct {
+		TypeBranch *branches;
+		size_t      len;
+		size_t      cap;
+	};
 	VEC(TypeAlias) aliases; // NOTE: distinct?
 } TypeTree;
 
@@ -100,7 +105,12 @@ typedef enum : u8 {
 
 TypeTree init_TypeTree(void);
 typeid   get_leaf(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf);
+typeid   basic_type(TypeTree *tree, PrimativeIndex index);
+typeid   as_pointer(TypeTree *tree, typeid type); // TODO: implementation
+typeid   as_address(TypeTree *tree, typeid type); // TODO: implementation
 void     print_typetree(TypeTree *tree);
-// FIXME: does not do a proper deep copy with type references
-// bool     copy_typetree(TypeTree *tree_a, TypeTree *tree_b); // deep copy
 bool     freetree(TypeTree *tree);
+
+// FIXME: does not do a proper deep copy with type references
+[[clang::unavailable("implementation is incomplete and may need to be rethought")]]
+bool copy_typetree(TypeTree *tree_a, TypeTree *tree_b); // deep copy

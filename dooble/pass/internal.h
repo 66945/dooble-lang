@@ -17,6 +17,7 @@ typedef struct {
 
 Semantics init_semantics(void);
 void      add_semantic_info(Semantics *semantics, AstResult *result); // multithreading options
+void      semantic_pass(Semantics *semantics);
 void      free_semantics(Semantics *semantics);
 
 /* multithreading on windows, this should be fun ...

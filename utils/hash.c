@@ -168,7 +168,7 @@ static void adjust_capacity(HashMap *map) {
 	memset(new_table.arr, 0, sizeof(HashKey) * new_table.cap);
 
 	for_range (i, map->table.cap) {
-		if (map->table.arr[i].key -= 0) continue;
+		if (map->table.arr[i].key == 0) continue;
 
 		// should both be constant
 		size_t  HASH    = map->table.arr[i].key;
@@ -214,11 +214,14 @@ bool set_pair(HashMap *map, void *key, void *val) {
 
 // returns a reference to the hashmap item with a lifetime of the key
 void *get_pair(HashMap *map, void *key) {
-	const size_t HASH    = map->hashfn(key);
-	size_t       address = HASH % map->table.cap;
+	return get_pairh(map, map->hashfn(key));
+}
+
+void *get_pairh(HashMap *map, const size_t hash) {
+	size_t address = hash % map->table.cap;
 
 	loop {
-		if (map->table.arr[address].key == HASH) {
+		if (map->table.arr[address].key == hash) {
 			return map->table.arr[address].content;
 		} else if (map->table.arr[address].content == NULL) {
 			return NULL;
@@ -226,8 +229,6 @@ void *get_pair(HashMap *map, void *key) {
 
 		address = (address + 1) % map->table.cap;
 	}
-
-	return NULL;
 }
 
 bool delete_pair(HashMap *map, void *key) {
@@ -248,6 +249,19 @@ bool delete_pair(HashMap *map, void *key) {
 
 		address = (address + 1) % map->table.cap;
 	}
+}
+
+void *hash_iter(HashMap *map, bool start) {
+	static size_t item_count = 0;
+	if (start)    item_count = 0;
+
+	while (item_count < map->table.cap) {
+		if (map->table.arr[item_count++].key != 0) {
+			return map->table.arr[item_count - 1].content;
+		}
+	}
+
+	return nullptr;
 }
 
 bool free_map(HashMap *map) {

@@ -30,6 +30,8 @@
 	"-Wunreachable-code-break",    \
 	"-Wall"
 
+#define EXTENSIONS "-fblocks"
+
 #define DEBUG_SYMBOLS "-g -O0 -fuse-ld=lld -DDEBUGGER"
 
 #define WRAP    "-Wl,--wrap=malloc,--wrap=calloc,--wrap=free"
@@ -59,7 +61,7 @@ void build(int argc, char *argv[]) {
 
 	ADD_FILES(TESTING, UTILS, STR_UTILS);
 	ADD_FILES(C_GEN);
-	ADD_FLAGS(WARNINGS, VERSION);
+	ADD_FLAGS(WARNINGS, EXTENSIONS, VERSION);
 
 	if (build_flags.deplicate) {
 		ADD_FILES(DEPLICATE);

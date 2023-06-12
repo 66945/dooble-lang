@@ -174,6 +174,7 @@ typedef struct {
 } Literal;
 
 // sum of all nodes
+// TODO: line number tracking
 struct Node_t {
 	enum {
 		EX_PASS,

@@ -6,8 +6,8 @@
 #include <stdint.h>
 
 #define let         __auto_type
-#define startup     __attribute__((constructor))
-#define fallthrough __attribute__((fallthrough))
+#define startup     [[gnu::constructor]]
+#define fallthrough [[fallthrough]]
 #define typeof(t)   __typeof__(t)
 #define typeofp(p)  __typeof__(*p)
 
@@ -15,10 +15,12 @@
 
 #define loop while (1)
 #define for_range(i, num) for (int i = 0; i < num; i++)
+#define for_char(str)     for (char *c = str; c != nullptr; *i++)
 #define new(T)            (T *) calloc(sizeof(T), 1)
 #define make(T, N)        (T *) calloc(sizeof(T), N)
 
 #define VEC(T)     struct { T *arr; size_t len; size_t cap; }
+#define RANGE(T)   struct { T *arr; size_t len; }
 #define PAIR(A, B) struct { A a; B b; }
 #define EXTEND_ARR(type, arr, len, cap)                   \
 	do {                                                  \

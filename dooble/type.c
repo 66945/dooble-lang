@@ -52,18 +52,18 @@ typeid get_leaf(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf) {
 	TypeBranch *branch = NULL;
 
 	if (base == NULL) {
-		branch = &tree->arr[0];
+		branch = &tree->branches[0];
 	}
 	else if (base->next == NULL) {
 		// creates a 'branch' and sets next to it.
-		EXTEND_ARR(TypeBranch, tree->arr, tree->len, tree->cap);
-		tree->arr[tree->len++] = (TypeBranch) {
+		EXTEND_ARR(TypeBranch, tree->branches, tree->len, tree->cap);
+		tree->branches[tree->len++] = (TypeBranch) {
 			.arr = make(TypeLeaf, 3),
 			.len = 0,
 			.cap = 3,
 		};
 
-		base->next = &tree->arr[tree->len - 1];
+		base->next = &tree->branches[tree->len - 1];
 		branch     = base->next;
 	}
 
@@ -83,6 +83,14 @@ typeid get_leaf(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf) {
 	return new_leaf;
 }
 
+typeid basic_type(TypeTree *tree, PrimativeIndex index) {
+	if (index < tree->branches->len) {
+		return &tree->branches[0].arr[index];
+	}
+
+	return VOID_ID;
+}
+
 static inline void add_type(TypeTree *tree, cstr typename) {
 	get_leaf(tree, NULL, &(TypeLeaf) {
 		.tag  = DBLTP_NAME,
@@ -92,7 +100,7 @@ static inline void add_type(TypeTree *tree, cstr typename) {
 
 TypeTree init_TypeTree(void) {
 	TypeTree tree = {
-		.arr = make(TypeBranch, 5),
+		.branches = make(TypeBranch, 5),
 		.len = 0,
 		.cap = 5,
 
@@ -115,8 +123,8 @@ TypeTree init_TypeTree(void) {
 		// NOTE: I may have fixed this already
 	};
 
-	EXTEND_ARR(TypeBranch, tree.arr, tree.len, tree.cap);
-	tree.arr[tree.len++] = (TypeBranch) {
+	EXTEND_ARR(TypeBranch, tree.branches, tree.len, tree.cap);
+	tree.branches[tree.len++] = (TypeBranch) {
 		.arr = make(TypeLeaf, 5),
 		.len = 0,
 		.cap = 5,
@@ -163,7 +171,7 @@ TypeTree init_TypeTree(void) {
 
 bool freetree(TypeTree *tree) {
 	for_range (i, tree->len) {
-		TypeBranch *const branch = &tree->arr[i];
+		TypeBranch *const branch = &tree->branches[i];
 
 		for_range (j, branch->len) {
 			if (branch->arr[j].tag == DBLTP_FN) {
@@ -199,10 +207,10 @@ bool freetree(TypeTree *tree) {
 		branch->arr = NULL;
 	}
 
-	free(tree->arr);
-	tree->len = 0;
-	tree->cap = 0;
-	tree->arr = NULL;
+	free(tree->branches);
+	tree->len      = 0;
+	tree->cap      = 0;
+	tree->branches = NULL;
 
 	// aliases
 	free(tree->aliases.arr);

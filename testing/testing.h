@@ -11,6 +11,8 @@
 void unimplemented(int line, const char *fn);
 void panic(const char *err, int line, const char *fn);
 
+#define DYNAMIC_ASSERT(cond, msg) if (!(cond)) PANIC(msg)
+
 // unit testing
 #define MAKE_TEST __attribute__((constructor)) static void
 #define ADD_TEST(name) addTest(#name, __FILE_NAME__, __LINE__, name)
