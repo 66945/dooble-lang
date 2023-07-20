@@ -15,16 +15,16 @@
 typedef struct {
 	enum : u8 {
 		// keywords
-		DB_ALLOC,   DB_AND,      DB_BREAK,    DB_CASE,
-		DB_CO,      DB_CONTINUE, DB_DEFER,    DB_DO,
-		DB_DONT,    DB_ELSE,     DB_ELIF,     DB_FALL,
-		DB_FALSE,   DB_FINAL,    DB_FOR,      DB_FREE,
-		DB_IF,      DB_IN,       DB_IS,       DB_INCLUDE,
-		DB_MAP,     DB_MATCH,    DB_NIL,      DB_NOT,
-		DB_OR,      DB_PACKAGE,  DB_PROTOCOL, DB_PROTECT,
-		DB_PUB,     DB_RETURN,   DB_STATIC,   DB_STRUCT,
-		DB_SUMTYPE, DB_TEST,     DB_TRUE,     DB_VEC,
-		DB_YIELD,
+		DB_ALLOC,   DB_ALIAS,    DB_AND,      DB_BREAK,
+		DB_CASE,    DB_CO,       DB_CONTINUE, DB_DEFER,
+		DB_DO,      DB_DONT,     DB_ELSE,     DB_ELIF,
+		DB_FALL,    DB_FALSE,    DB_FINAL,    DB_FOR,
+		DB_FREE,    DB_IF,       DB_IN,       DB_IS,
+		DB_INCLUDE, DB_MAP,      DB_MATCH,    DB_NIL,
+		DB_NOT,     DB_OR,       DB_PACKAGE,  DB_PROTOCOL,
+		DB_PROTECT, DB_PUB,      DB_RETURN,   DB_STATIC,   
+		DB_STRUCT,  DB_SUMTYPE,  DB_TEST,     DB_TRUE,
+		DB_VEC,     DB_YIELD,
 
 		// operators
 		DB_AMPER, DB_BITOR,  DB_BITNOT,  DB_DOTDOT, DB_DOTDOTDOT,
@@ -82,6 +82,7 @@ typedef struct {
 	Node *stmt;      // ref
 } ForWhile;
 
+// TODO: might want to add local variable information
 typedef VEC(Node *) Block;
 
 // declarations

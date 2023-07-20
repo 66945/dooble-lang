@@ -31,6 +31,7 @@ typedef struct { // NOTE: could use a hashmap
 	typeid to;
 } TypeAlias;
 
+// NOTE: could change to account for type evaluation & default values
 typedef struct {
 	string_t name;
 	typeid   type;
@@ -93,6 +94,8 @@ typedef struct {
 		size_t      len;
 		size_t      cap;
 	};
+
+	// OPTIM: Should this be a hash map? it would make sense
 	VEC(TypeAlias) aliases; // NOTE: distinct?
 } TypeTree;
 
@@ -100,11 +103,17 @@ typedef enum : u8 {
 	INT_INDEX,
 	FLOAT_INDEX,
 	DOOBLE_INDEX,
-	BOOL_INDEX
+	BOOL_INDEX,
+	STRING_INDEX,
+	CHAR_INDEX,
+	NULL_INDEX,
 } PrimativeIndex;
 
 TypeTree init_TypeTree(void);
+bool     leaf_exists(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf);
 typeid   get_leaf(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf);
+void     add_type(TypeTree *tree, cstr typename);
+void     add_typedef(TypeTree *tree, typeid from, typeid to);
 typeid   basic_type(TypeTree *tree, PrimativeIndex index);
 typeid   as_pointer(TypeTree *tree, typeid type); // TODO: implementation
 typeid   as_address(TypeTree *tree, typeid type); // TODO: implementation

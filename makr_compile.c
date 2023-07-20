@@ -15,12 +15,14 @@
 	"deplicate/compile.c",   \
 	"deplicate/tests.c"
 
-#define DOOBLE            \
-	"dooble/lexer.c",     \
-	"dooble/parse.c",     \
-	"dooble/print_ast.c", \
-	"dooble/tests.c",     \
-	"dooble/type.c"
+#define DOOBLE                       \
+	"dooble/lexer.c",                \
+	"dooble/parse.c",                \
+	"dooble/print_ast.c",            \
+	"dooble/tests.c",                \
+	"dooble/type.c",                 \
+	"dooble/backend/cgen/typegen.c", \
+	"dooble/pass/semantic.c"
 
 #define WARNINGS                   \
 	"-Wconditional-uninitialized", \

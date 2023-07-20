@@ -7,6 +7,7 @@
 #define KEYWORDS_LEN 37
 static const char *const KEYWORDS[] = {
 	[DB_ALLOC]    = "alloc",
+	[DB_ALIAS]    = "alias",
 	[DB_AND]      = "and",
 	[DB_BREAK]    = "break",
 	[DB_CASE]     = "case",
@@ -423,7 +424,7 @@ void free_tokens(u32 len, DoobleToken tokens[len]) {
 }
 
 startup static void init_keywords(void) {
-	KEYWORD_SET= init_hashset();
+	KEYWORD_SET = init_hashset();
 
 	for_range (i, KEYWORDS_LEN) {
 		add_item(&KEYWORD_SET, KEYWORDS[i]);

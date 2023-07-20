@@ -1,4 +1,5 @@
 #include "type.h"
+#include <corecrt_memory.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +49,21 @@ static bool leaf_eq(TypeLeaf *leafa, TypeLeaf *leafb) {
 	}
 }
 
+bool leaf_exists(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf) {
+	TypeBranch *branch = NULL;
+
+	if (base == NULL) branch = &tree->branches[0];
+	else              return false;
+
+	for_range (i, branch->len) {
+		if (leaf_eq(&branch->arr[i], leaf)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 typeid get_leaf(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf) {
 	TypeBranch *branch = NULL;
 
@@ -76,7 +92,29 @@ typeid get_leaf(TypeTree *tree, TypeLeaf *base, TypeLeaf *leaf) {
 	EXTEND_ARR(TypeLeaf, branch->arr, branch->len, branch->cap);
 	TypeLeaf *const new_leaf = &branch->arr[branch->len++];
 
-	*new_leaf = *leaf;
+	switch (leaf->tag) {
+		case DBLTP_FN:
+			new_leaf->fn.ret = leaf->fn.ret;
+			new_leaf->fn.len = leaf->fn.len;
+			new_leaf->fn.cap = leaf->fn.len;
+			new_leaf->fn.arr = make(typeid, leaf->fn.len);
+			memcpy(new_leaf->fn.arr, leaf->fn.arr, new_leaf->fn.len);
+			break;
+
+		case DBLTP_STRUCT:
+		case DBLTP_UNION:
+			new_leaf->members.len = leaf->members.len;
+			new_leaf->members.cap = leaf->members.len;
+			new_leaf->members.arr = make(Member, leaf->members.len);
+			memcpy(new_leaf->members.arr, leaf->members.arr, new_leaf->members.len);
+			break;
+
+		case DBLTP_NAME:
+			new_leaf->name = copy_str(&leaf->name);
+			break;
+
+		default: *new_leaf = *leaf;
+	}
 	new_leaf->parent = base;
 	new_leaf->next   = NULL;
 
@@ -91,7 +129,26 @@ typeid basic_type(TypeTree *tree, PrimativeIndex index) {
 	return VOID_ID;
 }
 
-static inline void add_type(TypeTree *tree, cstr typename) {
+void add_typedef(TypeTree *tree, typeid from, typeid to) {
+	EXTEND_ARR(TypeAlias,
+			tree->aliases.arr,
+			tree->aliases.len,
+			tree->aliases.cap);
+
+	tree->aliases.arr[tree->aliases.len++] = (TypeAlias) {
+		.from = from, .to = to,
+	};
+}
+
+typeid as_pointer(TypeTree *tree, typeid type) {
+	return VOID_ID;
+}
+
+typeid as_address(TypeTree *tree, typeid type) {
+	return VOID_ID;
+}
+
+inline void add_type(TypeTree *tree, cstr typename) {
 	get_leaf(tree, NULL, &(TypeLeaf) {
 		.tag  = DBLTP_NAME,
 		.name = init_str(typename),
@@ -134,6 +191,9 @@ TypeTree init_TypeTree(void) {
 	add_type(&tree, "float");
 	add_type(&tree, "dooble");
 	add_type(&tree, "bool");
+	add_type(&tree, "string");
+	add_type(&tree, "char");
+	add_type(&tree, "null_t_secret");
 
 	return tree;
 }

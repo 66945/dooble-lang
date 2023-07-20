@@ -115,8 +115,8 @@ typedef enum : u16 {
 
 enum : u16 {
 	NONE_SET   = TS_OPT  | TS_RES | TS_PTR | TS_ARR  | TS_FUNC | TS_NAME | TS_STRUCT,
-	OPT_SET    = TS_NONE | TS_PTR | TS_ARR | TS_FUNC | TS_NAME | TS_STRUCT,
 	RES_SET    = TS_NONE | TS_OPT | TS_PTR | TS_ARR  | TS_FUNC | TS_NAME | TS_STRUCT,
+	OPT_SET    = TS_NONE | TS_PTR | TS_ARR | TS_FUNC | TS_NAME | TS_STRUCT,
 	PTR_SET    = TS_OPT  | TS_PTR | TS_ARR | TS_FUNC | TS_NAME | TS_STRUCT,
 	ARR_SET    = TS_OPT  | TS_PTR | TS_ARR | TS_FUNC | TS_NAME | TS_STRUCT,
 	FUNC_SET   = TS_NONE,
@@ -354,7 +354,7 @@ AstResult get_ast(size_t N, DoobleToken tokens[N], TypeTree *tree, const char *c
 		.type_tree = tree,
 	};
 
-	// should be the first right?
+	// will always be the first element
 	let global_scope = append_node(&parse, &(Node) {
 		.tag   = EX_BLOCK,
 		.block = {
@@ -370,7 +370,11 @@ AstResult get_ast(size_t N, DoobleToken tokens[N], TypeTree *tree, const char *c
 				global_scope->block.len,
 				global_scope->block.len);
 
-		global_scope->block.arr[global_scope->block.len++] = statement(&parse);
+		Node *expr = statement(&parse);
+		if (expr != NULL) {
+			global_scope->block.arr[global_scope->block.len++] = expr;
+		}
+
 		expect(&parse, DB_SEMI, "expected ';' or newline character");
 	}
 
@@ -502,6 +506,8 @@ static Node *forstmt(Parse *p) {
 	}
 }
 
+// if a == b Name :: struct { ...
+
 static Node *dostmt(Parse *p, bool dont) {
 	if (!match(p, DB_DO)) return NULL;
 
@@ -555,7 +561,10 @@ static Node *block(Parse *p) {
 		}
 
 		EXTEND_ARR(Node *, expr->block.arr, expr->block.len, expr->block.cap);
-		expr->block.arr[expr->block.len++] = statement(p);
+		Node *stmt = statement(p);
+		if (stmt != NULL) {
+			expr->block.arr[expr->block.len++] = stmt;
+		}
 
 		if (!expect(p, DB_SEMI, "expected ';' xor newline character")) {
 			free(expr->block.arr);
@@ -595,8 +604,39 @@ static Node *declaration(Parse *p) {
 
 	int tok = peek(p);
 	if (tok == DB_COLON || tok == DB_EQUAL) {
-		expr->declare.is_const = match(p, DB_COLON);
-		expr->declare.assign   = expression(p);
+		expr->declare.is_const = advance(p)->token == DB_COLON;
+
+		if (peek(p) == DB_STRUCT
+				|| peek(p) == DB_SUMTYPE
+				|| match(p, DB_ALIAS)) // consume the alias token, but leave sum & struct
+		{
+			TypeLeaf named_leaf = {
+				.tag  = DBLTP_NAME,
+				.name = expr->declare.name,
+			};
+
+			if (!leaf_exists(p->type_tree, NULL, &named_leaf)) {
+				error_file("type %s is already defined", peekline(p),
+						p->buffer, expr->declare.name);
+				p->parse_error = true;
+				return NULL;
+			}
+
+			typeid named_type = get_leaf(p->type_tree, NULL, &named_leaf);
+			freestr(&named_leaf.name);
+
+			typeid type = parse_type(p);
+			if (type == VOID_ID) {
+				error_file("type %s has invalid type", peekline(p),
+						p->buffer, expr->declare.name);
+				p->parse_error = true;
+				return NULL;
+			}
+
+			add_typedef(p->type_tree, named_type, type);
+			return NULL;
+		}
+		else expr->declare.assign = expression(p);
 	}
 
 	return expr;

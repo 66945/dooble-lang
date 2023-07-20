@@ -3,7 +3,7 @@
 #include "../strutils/str.h"
 
 typedef enum {
-	LOG  = 0b111, // blue
+	LOG  = 0b111, // white
 	WARN = 0b110, // yellow
 	ERR  = 0b100, // red
 } ErrorLevel;

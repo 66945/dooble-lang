@@ -107,16 +107,10 @@ CType make_ctype(void) {
 }
 
 void add_ptr(CType *type, bool is_const) {
-	if (type->modifiers.len >= type->modifiers.cap) {
-		type->modifiers.cap *= 2;
-		let tmp = realloc(type->modifiers.arr, type->modifiers.cap);
-		if (tmp == NULL) {
-			free(tmp);
-			PANIC("cannot extend array");
-		}
-
-		type->modifiers.arr = tmp;
-	}
+	EXTEND_ARR(CTypeElement,
+			type->modifiers.arr,
+			type->modifiers.len,
+			type->modifiers.cap);
 
 	type->modifiers.arr[type->modifiers.len++] = (CTypeElement) {
 		.tag      = TYPE_PTR,
@@ -502,16 +496,10 @@ string_t get_generated(CodeGen *cg) {
 }
 
 static void grow_stack(CodeGen *cg) {
-	if (cg->stack_top >= cg->cap) {
-		cg->cap *= 2;
-		let tmp = realloc(cg->ast_stack, cg->cap);
-		if (tmp == NULL) {
-			free(tmp);
-			PANIC("could not grow ast stack");
-		}
-
-		cg->ast_stack = tmp;
-	}
+	EXTEND_ARR(TargetAST,
+			cg->ast_stack,
+			cg->stack_top,
+			cg->cap);
 }
 
 void emit_scope(CodeGen *cg) {
@@ -560,16 +548,10 @@ void emit_identifier(
 
 	let scope = &cg->ast_stack[cg->active_scope].scope;
 
-	if (scope->ident_len >= scope->ident_cap) {
-		scope->ident_cap *= 2;
-		let tmp = realloc(scope->identifiers, scope->ident_cap);
-		if (tmp == NULL) {
-			free(tmp);
-			PANIC("cannot expand identifier vector");
-		}
-
-		scope->identifiers = tmp;
-	}
+	EXTEND_ARR(Identifier,
+			scope->identifiers,
+			scope->ident_len,
+			scope->ident_cap);
 
 	scope->identifiers[scope->ident_len++] =
 		make_identifier(name, &type, is_static, is_extern);
